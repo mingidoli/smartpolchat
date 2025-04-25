@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/button_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/text_button_intro"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이 항목과 관련된 이미지가 있습니다."
+        android:textSize="14sp"
+        android:textColor="#444444"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/button_expand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="이미지 보기"
+        android:backgroundTint="#1976D2"
+        android:textColor="#FFFFFF"/>
+</LinearLayout>
