@@ -1,5 +1,6 @@
 package com.example.smartpolchat;
 
+import android.content.Context;
 import org.json.*;
 import java.io.*;
 import java.net.*;
@@ -7,11 +8,24 @@ import java.util.*;
 
 public class GPTService {
 
-    private static final String API_KEY = "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";
+    private static String API_KEY = null;
     private static final String ASSISTANT_ID = "asst_LCaqNb5WHacrfzIr822Sspx1";
     private static final String BASE_URL = "https://api.openai.com/v1";
 
+    // 🔑 키를 외부 파일에서 불러오는 메서드 (앱 시작 시 1회 호출)
+    public static void init(Context context) {
+        try {
+            Properties props = new Properties();
+            InputStream inputStream = context.getAssets().open("apikey.properties");
+            props.load(inputStream);
+            API_KEY = props.getProperty("OPENAI_API_KEY");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static String askGPT(String userInput) {
+        if (API_KEY == null) return "❌ API Key가 로딩되지 않았습니다.";
         try {
             // 1. 새 Thread 생성
             JSONObject threadRes = post(BASE_URL + "/threads", new JSONObject());

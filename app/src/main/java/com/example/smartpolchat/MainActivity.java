@@ -26,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
 
+        GPTService.init(this); // ✅ 이 줄을 여기 추가!
+
         editTextInput = findViewById(R.id.editTextInput);
         buttonSend = findViewById(R.id.buttonSend);
         chatRecyclerView = findViewById(R.id.chatRecyclerView);
