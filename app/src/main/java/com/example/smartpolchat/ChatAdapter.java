@@ -2,17 +2,21 @@ package com.example.smartpolchat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.view.*;
 import android.widget.*;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import me.relex.circleindicator.CircleIndicator3;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final List<ChatMessage> chatList;
     private final Context context;
-    private final RecyclerView recyclerView;  // 🔥 추가
+    private final RecyclerView recyclerView;
 
     public ChatAdapter(List<ChatMessage> chatList, Context context, RecyclerView recyclerView) {
         this.chatList = chatList;
@@ -29,6 +33,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         LinearLayout leftBubble, rightBubble;
         TextView textMessageLeft, textTimeLeft;
         TextView textMessageRight, textTimeRight;
+        LinearLayout buttonContainer; // ✅ 버튼 컨테이너 추가
 
         public TextViewHolder(View view) {
             super(view);
@@ -38,6 +43,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             textTimeLeft = view.findViewById(R.id.text_time);
             textMessageRight = view.findViewById(R.id.text_message_right);
             textTimeRight = view.findViewById(R.id.text_time_right);
+            buttonContainer = view.findViewById(R.id.button_container); // ✅ 버튼 컨테이너 찾기
         }
     }
 
@@ -52,12 +58,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
     }
 
-    public static class ButtonViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout buttonContainer;
+    public static class SlideViewHolder extends RecyclerView.ViewHolder {
+        ViewPager2 viewPager;
+        CircleIndicator3 indicator;
 
-        public ButtonViewHolder(View view) {
+        public SlideViewHolder(View view) {
             super(view);
-            buttonContainer = view.findViewById(R.id.button_container);
+            viewPager = view.findViewById(R.id.slide_viewpager);
+            indicator = view.findViewById(R.id.indicator);
         }
     }
 
@@ -66,8 +74,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         LayoutInflater inflater = LayoutInflater.from(context);
         if (viewType == ChatMessage.TYPE_IMAGE) {
             return new ImageViewHolder(inflater.inflate(R.layout.item_chat_image, parent, false));
-        } else if (viewType == ChatMessage.TYPE_BUTTON) {
-            return new ButtonViewHolder(inflater.inflate(R.layout.item_chat_button, parent, false));
+        } else if (viewType == ChatMessage.TYPE_SLIDE) {
+            return new SlideViewHolder(inflater.inflate(R.layout.item_chat_slide, parent, false));
         } else {
             return new TextViewHolder(inflater.inflate(R.layout.item_chat, parent, false));
         }
@@ -75,6 +83,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        holder.setIsRecyclable(false);
         ChatMessage chat = chatList.get(position);
 
         if (holder instanceof TextViewHolder) {
@@ -83,13 +92,52 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (chat.type == ChatMessage.TYPE_USER) {
                 h.leftBubble.setVisibility(View.GONE);
                 h.rightBubble.setVisibility(View.VISIBLE);
-                h.textMessageRight.setText(chat.message.replace("\\n", "\n"));
+                h.textMessageRight.setText(chat.message != null ? chat.message.replace("\\n", "\n") : "");
                 h.textTimeRight.setText(chat.time);
             } else {
                 h.rightBubble.setVisibility(View.GONE);
                 h.leftBubble.setVisibility(View.VISIBLE);
-                h.textMessageLeft.setText(chat.message.replace("\\n", "\n"));
+                h.textMessageLeft.setText(chat.message != null ? chat.message.replace("\\n", "\n") : "");
                 h.textTimeLeft.setText(chat.time);
+
+                // ✅ 버튼 처리
+                h.buttonContainer.removeAllViews();
+                if (chat.buttons != null && !chat.buttons.isEmpty()) {
+                    h.buttonContainer.setVisibility(View.VISIBLE);
+                    for (RuleEntry.ButtonEntry btn : chat.buttons) {
+                        Button dynamicBtn = new Button(context);
+                        dynamicBtn.setText(btn.label);
+                        dynamicBtn.setBackgroundResource(R.drawable.rounded_button);
+
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT,   // ✅ 가로 길이를 텍스트 크기 기반으로
+                                dpToPx(48)
+                        );
+                        params.setMargins(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8)); // ✅ 좌우 여백 주기
+                        dynamicBtn.setLayoutParams(params);
+                        dynamicBtn.setAllCaps(false);
+                        dynamicBtn.setTextSize(14);
+                        dynamicBtn.setGravity(Gravity.CENTER);
+                        dynamicBtn.setSingleLine(true);
+                        dynamicBtn.setEllipsize(TextUtils.TruncateAt.END);
+
+                        dynamicBtn.setPadding(dpToPx(24), dpToPx(0), dpToPx(24), dpToPx(0));
+
+                        dynamicBtn.setOnClickListener(v -> {
+                            int resId = context.getResources().getIdentifier(btn.image, "drawable", context.getPackageName());
+                            if (resId != 0) {
+                                ChatMessage imgMsg = new ChatMessage(ChatMessage.TYPE_IMAGE, null, getCurrentTime(), resId);
+                                chatList.add(imgMsg);
+                                notifyItemInserted(chatList.size() - 1);
+                                recyclerView.smoothScrollToPosition(chatList.size() - 1);
+                            }
+                        });
+
+                        h.buttonContainer.addView(dynamicBtn);
+                    }
+                } else {
+                    h.buttonContainer.setVisibility(View.GONE);
+                }
             }
 
         } else if (holder instanceof ImageViewHolder) {
@@ -103,27 +151,23 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 context.startActivity(intent);
             });
 
-        } else if (holder instanceof ButtonViewHolder) {
-            ButtonViewHolder h = (ButtonViewHolder) holder;
-            h.buttonContainer.removeAllViews();
+        } else if (holder instanceof SlideViewHolder) {
+            SlideViewHolder h = (SlideViewHolder) holder;
 
-            for (RuleEntry.ButtonEntry btn : chat.buttons) {
-                Button dynamicBtn = new Button(context);
-                dynamicBtn.setText(btn.label);
+            ViewPager2 viewPager = h.viewPager;
+            viewPager.setClipToPadding(false);
+            viewPager.setClipChildren(false);
+            viewPager.setOffscreenPageLimit(3);
 
-                dynamicBtn.setOnClickListener(v -> {
-                    int resId = context.getResources().getIdentifier(btn.image, "drawable", context.getPackageName());
-                    if (resId != 0) {
-                        ChatMessage imgMsg = new ChatMessage(ChatMessage.TYPE_IMAGE, null, getCurrentTime(), resId);
-                        chatList.add(imgMsg);
-                        notifyItemInserted(chatList.size() - 1);
-                        recyclerView.smoothScrollToPosition(chatList.size() - 1); // 🔥 부드러운 자동 스크롤
-                    } else {
-                        Toast.makeText(context, "이미지 '" + btn.image + "' 를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
-                    }
-                });
+            RecyclerView innerPagerRecycler = (RecyclerView) viewPager.getChildAt(0);
+            innerPagerRecycler.setClipToPadding(false);
+            innerPagerRecycler.setPadding(40, 0, 40, 0);
 
-                h.buttonContainer.addView(dynamicBtn);
+            SlideAdapter adapter = new SlideAdapter(chat.slides, context);
+            h.viewPager.setAdapter(adapter);
+
+            if (h.indicator != null) {
+                h.indicator.setViewPager(viewPager);
             }
         }
     }
@@ -137,5 +181,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         SimpleDateFormat sdf = new SimpleDateFormat("a h:mm", Locale.getDefault());
         return sdf.format(new Date());
     }
-}
 
+    private int dpToPx(int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+}

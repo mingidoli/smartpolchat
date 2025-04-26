@@ -3,63 +3,76 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:layout_margin="8dp"
-    android:background="@drawable/bg_bot_bubble">
+    android:padding="8dp">
 
-    <!-- Bot Message Bubble -->
+    <!-- Bot 말풍선 -->
     <LinearLayout
         android:id="@+id/left_bubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
+        android:background="@drawable/bg_bot_bubble"
+        android:padding="12dp"
+        android:layout_margin="8dp"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/text_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:maxWidth="250dp"
-            android:background="@drawable/bg_bot"
+            android:maxWidth="260dp"
             android:textColor="#000000"
-            android:padding="10dp" />
+            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:maxLines="100"
+            android:ellipsize="end" />
+
+        <LinearLayout
+            android:id="@+id/button_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"/>
 
         <TextView
             android:id="@+id/text_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:layout_marginStart="6dp"/>
+            android:textColor="#888888"
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
-    <!-- User Message Bubble -->
+    <!-- User 말풍선 -->
     <LinearLayout
         android:id="@+id/right_bubble"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_user"
         android:orientation="vertical"
+        android:padding="12dp"
         android:layout_gravity="end"
-        android:visibility="gone"
-        android:layout_marginStart="16dp">
+        android:layout_margin="8dp"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/text_message_right"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_user"
-            android:textColor="#ffffff"
+            android:textColor="#FFFFFF"
             android:textSize="16sp"
-            android:padding="10dp"
-            android:maxWidth="250dp"/>
+            android:maxWidth="260dp"
+            android:maxLines="100"
+            android:lineSpacingExtra="4dp" />
 
         <TextView
             android:id="@+id/text_time_right"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:textColor="#cccccc"
-            android:layout_marginTop="2dp"
-            android:layout_gravity="end"/>
+            android:textColor="#CCCCCC"
+            android:layout_marginTop="4dp"
+            android:layout_gravity="end" />
     </LinearLayout>
 </LinearLayout>

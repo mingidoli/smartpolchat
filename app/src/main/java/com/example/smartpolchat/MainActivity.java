@@ -58,11 +58,18 @@ public class MainActivity extends AppCompatActivity {
 
             if (ruleMap.containsKey(input)) {
                 RuleEntry entry = ruleMap.get(input);
-                chatList.add(new ChatMessage(ChatMessage.TYPE_BOT, entry.answerText, getCurrentTime()));
-                if (entry.buttons != null && !entry.buttons.isEmpty()) {
-                    chatList.add(new ChatMessage(ChatMessage.TYPE_BUTTON, null, getCurrentTime(), entry.buttons));
+
+                int startIndex = chatList.size(); // ✅ 추가 전 위치 기록
+
+                if (entry.answer != null && entry.answer.text != null && !entry.answer.text.trim().isEmpty()) {
+                    chatList.add(new ChatMessage(ChatMessage.TYPE_BOT, entry.answer.text, getCurrentTime(), entry.answer.buttons));
                 }
-                chatAdapter.notifyItemRangeInserted(chatList.size() - 2, 2);
+
+                int addedCount = chatList.size() - startIndex; // ✅ 정확한 개수
+                if (addedCount > 0) {
+                    chatAdapter.notifyItemRangeInserted(startIndex, addedCount);
+                }
+
                 chatRecyclerView.smoothScrollToPosition(chatList.size() - 1);
                 return;
             }
@@ -84,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject obj = arr.getJSONObject(i);
                 RuleEntry entry = new RuleEntry();
-                entry.answerText = obj.getString("answerText");
 
                 String keywordField = obj.optString("keyword", "");
                 if (!keywordField.isEmpty()) {
@@ -94,22 +100,41 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                JSONArray buttonsArray = obj.optJSONArray("buttons");
-                if (buttonsArray != null) {
-                    List<RuleEntry.ButtonEntry> buttonList = new ArrayList<>();
-                    for (int j = 0; j < buttonsArray.length(); j++) {
-                        JSONObject btnObj = buttonsArray.getJSONObject(j);
-                        RuleEntry.ButtonEntry btn = new RuleEntry.ButtonEntry();
-                        btn.label = btnObj.getString("label");
-                        btn.image = btnObj.getString("image");
-                        buttonList.add(btn);
+                JSONObject answerObj = obj.optJSONObject("answer");
+                if (answerObj != null) {
+                    RuleEntry.Answer answer = new RuleEntry.Answer();
+                    answer.text = answerObj.optString("text", "");
+
+                    JSONArray buttonArray = answerObj.optJSONArray("buttons");
+                    if (buttonArray != null) {
+                        List<RuleEntry.ButtonEntry> buttons = new ArrayList<>();
+                        for (int j = 0; j < buttonArray.length(); j++) {
+                            JSONObject btnObj = buttonArray.getJSONObject(j);
+                            RuleEntry.ButtonEntry btn = new RuleEntry.ButtonEntry();
+                            btn.label = btnObj.getString("label");
+                            btn.image = btnObj.getString("image");
+                            buttons.add(btn);
+                        }
+                        answer.buttons = buttons;
                     }
-                    entry.buttons = buttonList;
+                    entry.answer = answer;
+                }
+
+                JSONArray slidesArray = obj.optJSONArray("slides");
+                if (slidesArray != null) {
+                    List<RuleEntry.SlideEntry> slides = new ArrayList<>();
+                    for (int j = 0; j < slidesArray.length(); j++) {
+                        JSONObject slideObj = slidesArray.getJSONObject(j);
+                        RuleEntry.SlideEntry slide = new RuleEntry.SlideEntry();
+                        slide.text = slideObj.getString("text");
+                        slides.add(slide);
+                    }
+                    entry.slides = slides;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, "⚠️ 규정 파일 로딩 중 오류 발생", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "⚠️ 규정 파일 로딩 오류 발생", Toast.LENGTH_LONG).show();
         }
     }
 

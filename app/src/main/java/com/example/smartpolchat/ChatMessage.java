@@ -7,12 +7,16 @@ public class ChatMessage {
     public static final int TYPE_BOT = 1;
     public static final int TYPE_IMAGE = 2;
     public static final int TYPE_BUTTON = 3;
+    public static final int TYPE_SLIDE = 4; // 추가됨
+
 
     public int type;
     public String message;
     public String time;
     public int imageResId;  // 이미지용
     public List<RuleEntry.ButtonEntry> buttons;  // 버튼 목록
+    public List<RuleEntry.SlideEntry> slides; // 추가됨
+
 
     // 기본 텍스트 메시지 (사용자, GPT)
     public ChatMessage(int type, String message, String time) {
@@ -35,5 +39,11 @@ public class ChatMessage {
         this.message = message;
         this.time = time;
         this.buttons = buttons;
+    }
+    public ChatMessage(int type, String message, String time, List<RuleEntry.SlideEntry> slides, boolean isSlide) {
+        this.type = type;
+        this.message = message;
+        this.time = time;
+        this.slides = slides;
     }
 }

@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#3F51B5"/>
-    <corners android:radius="8dp"/>
-</shape>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#C8DDF2" /> <!-- 클릭 시 색상 -->
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#E0EAF5" /> <!-- 기본 색상 -->
+            <corners android:radius="12dp" />
+            <stroke android:width="1dp" android:color="#B0C4DE" />
+        </shape>
+    </item>
+
+</selector>
