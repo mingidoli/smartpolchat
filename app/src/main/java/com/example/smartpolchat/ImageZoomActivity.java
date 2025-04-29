@@ -1,21 +1,25 @@
 package com.example.smartpolchat;
 
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-import com.github.chrisbanes.photoview.PhotoView;
 import android.widget.ImageView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.github.chrisbanes.photoview.PhotoView;
+
 public class ImageZoomActivity extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_zoom);
 
-        PhotoView photoView = findViewById(R.id.zoomedImage);
-        int imageResId = getIntent().getIntExtra("imageResId", -1);
+        String imageName = getIntent().getStringExtra("imageName");
+        PhotoView photoView = findViewById(R.id.photo_view);
 
-        if (imageResId != -1) {
-            photoView.setImageResource(imageResId);
+        if (imageName != null) {
+            int resId = getResources().getIdentifier(imageName, "drawable", getPackageName());
+            photoView.setImageResource(resId);
         }
     }
 }

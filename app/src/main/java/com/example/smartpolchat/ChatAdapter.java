@@ -2,128 +2,154 @@ package com.example.smartpolchat;
 
 import android.content.Context;
 import android.content.Intent;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import androidx.viewpager2.widget.ViewPager2;
+
+import java.util.List;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    public interface OnImageRequestListener {
+        void onImageRequested(String imageName);
+    }
+
     private final List<ChatMessage> chatList;
     private final Context context;
-    private final RecyclerView recyclerView;  // 🔥 추가
+    private final OnImageRequestListener listener;
 
-    public ChatAdapter(List<ChatMessage> chatList, Context context, RecyclerView recyclerView) {
-        this.chatList = chatList;
+    public ChatAdapter(Context context, List<ChatMessage> chatList, OnImageRequestListener listener) {
         this.context = context;
-        this.recyclerView = recyclerView;
+        this.chatList = chatList;
+        this.listener = listener;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return chatList.get(position).type;
+        return chatList.get(position).getType();
     }
 
-    public static class TextViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout leftBubble, rightBubble;
-        TextView textMessageLeft, textTimeLeft;
-        TextView textMessageRight, textTimeRight;
-
-        public TextViewHolder(View view) {
-            super(view);
-            leftBubble = view.findViewById(R.id.left_bubble);
-            rightBubble = view.findViewById(R.id.right_bubble);
-            textMessageLeft = view.findViewById(R.id.text_message);
-            textTimeLeft = view.findViewById(R.id.text_time);
-            textMessageRight = view.findViewById(R.id.text_message_right);
-            textTimeRight = view.findViewById(R.id.text_time_right);
-        }
-    }
-
-    public static class ImageViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageView;
-        TextView imageTime;
-
-        public ImageViewHolder(View view) {
-            super(view);
-            imageView = view.findViewById(R.id.image_chat);
-            imageTime = view.findViewById(R.id.image_time);
-        }
-    }
-
-    public static class ButtonViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout buttonContainer;
-
-        public ButtonViewHolder(View view) {
-            super(view);
-            buttonContainer = view.findViewById(R.id.button_container);
-        }
-    }
-
+    @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        if (viewType == ChatMessage.TYPE_IMAGE) {
-            return new ImageViewHolder(inflater.inflate(R.layout.item_chat_image, parent, false));
-        } else if (viewType == ChatMessage.TYPE_BUTTON) {
-            return new ButtonViewHolder(inflater.inflate(R.layout.item_chat_button, parent, false));
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == ChatMessage.TYPE_USER) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_user, parent, false);
+            return new UserMessageViewHolder(view);
+        } else if (viewType == ChatMessage.TYPE_IMAGE) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_image, parent, false);
+            return new ImageViewHolder(view);
+        } else if (viewType == ChatMessage.TYPE_SLIDE) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_slide_group, parent, false);
+            return new SlideGroupViewHolder(view);
         } else {
-            return new TextViewHolder(inflater.inflate(R.layout.item_chat, parent, false));
+            View view = LayoutInflater.from(context).inflate(R.layout.item_chat, parent, false);
+            return new BotMessageViewHolder(view);
         }
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ChatMessage chat = chatList.get(position);
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        ChatMessage chatMessage = chatList.get(position);
 
-        if (holder instanceof TextViewHolder) {
-            TextViewHolder h = (TextViewHolder) holder;
+        if (holder instanceof UserMessageViewHolder) {
+            ((UserMessageViewHolder) holder).textMessageUser.setText(chatMessage.getMessage());
+            ((UserMessageViewHolder) holder).textTimeUser.setText(chatMessage.getTime());
+        }
 
-            if (chat.type == ChatMessage.TYPE_USER) {
-                h.leftBubble.setVisibility(View.GONE);
-                h.rightBubble.setVisibility(View.VISIBLE);
-                h.textMessageRight.setText(chat.message.replace("\\n", "\n"));
-                h.textTimeRight.setText(chat.time);
-            } else {
-                h.rightBubble.setVisibility(View.GONE);
-                h.leftBubble.setVisibility(View.VISIBLE);
-                h.textMessageLeft.setText(chat.message.replace("\\n", "\n"));
-                h.textTimeLeft.setText(chat.time);
+        else if (holder instanceof BotMessageViewHolder) {
+            BotMessageViewHolder botHolder = (BotMessageViewHolder) holder;
+            botHolder.textMessageBot.setText(chatMessage.getMessage());
+            botHolder.textTimeBot.setText(chatMessage.getTime());
+
+            botHolder.buttonContainer.removeAllViews();
+            List<ButtonEntry> buttons = chatMessage.getButtons();
+            if (buttons != null && !buttons.isEmpty()) {
+                for (ButtonEntry b : buttons) {
+                    Button btn = new Button(context);
+                    btn.setText(b.label);
+                    btn.setTextSize(14f);
+                    btn.setAllCaps(false);
+                    btn.setBackgroundTintList(context.getColorStateList(R.color.teal_700));
+                    btn.setTextColor(context.getColor(R.color.white));
+                    btn.setOnClickListener(v -> {
+                        if (listener != null) {
+                            listener.onImageRequested(b.image);
+                        }
+                    });
+                    botHolder.buttonContainer.addView(btn);
+                }
             }
+        }
 
-        } else if (holder instanceof ImageViewHolder) {
-            ImageViewHolder h = (ImageViewHolder) holder;
-            h.imageView.setImageResource(chat.imageResId);
-            h.imageTime.setText(chat.time);
+        else if (holder instanceof ImageViewHolder) {
+            ImageViewHolder imgHolder = (ImageViewHolder) holder;
+            String imageName = chatMessage.getImageName();
+            if (imageName != null) {
+                int resId = context.getResources().getIdentifier(imageName, "drawable", context.getPackageName());
+                imgHolder.imageView.setImageResource(resId);
 
-            h.imageView.setOnClickListener(v -> {
-                Intent intent = new Intent(context, FullScreenImageActivity.class);
-                intent.putExtra("imageResId", chat.imageResId);
-                context.startActivity(intent);
-            });
+                imgHolder.imageView.setOnClickListener(v -> {
+                    Intent intent = new Intent(context, ImageZoomActivity.class);
+                    intent.putExtra("imageName", imageName);
+                    context.startActivity(intent);
+                });
+            }
+        }
 
-        } else if (holder instanceof ButtonViewHolder) {
-            ButtonViewHolder h = (ButtonViewHolder) holder;
-            h.buttonContainer.removeAllViews();
+        else if (holder instanceof SlideGroupViewHolder) {
+            SlideGroupViewHolder slideHolder = (SlideGroupViewHolder) holder;
+            List<SlideEntry> slides = chatMessage.getSlides();
 
-            for (RuleEntry.ButtonEntry btn : chat.buttons) {
-                Button dynamicBtn = new Button(context);
-                dynamicBtn.setText(btn.label);
+            if (slides != null && !slides.isEmpty()) {
+                SlideAdapter adapter = new SlideAdapter(context, slides, listener);
+                slideHolder.slideViewPager.setAdapter(adapter);
 
-                dynamicBtn.setOnClickListener(v -> {
-                    int resId = context.getResources().getIdentifier(btn.image, "drawable", context.getPackageName());
-                    if (resId != 0) {
-                        ChatMessage imgMsg = new ChatMessage(ChatMessage.TYPE_IMAGE, null, getCurrentTime(), resId);
-                        chatList.add(imgMsg);
-                        notifyItemInserted(chatList.size() - 1);
-                        recyclerView.smoothScrollToPosition(chatList.size() - 1); // 🔥 부드러운 자동 스크롤
-                    } else {
-                        Toast.makeText(context, "이미지 '" + btn.image + "' 를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+                // 🔵 인디케이터 생성
+                slideHolder.indicatorContainer.removeAllViews(); // 초기화
+                int slideCount = slides.size();
+                ImageView[] dots = new ImageView[slideCount];
+
+                for (int i = 0; i < slideCount; i++) {
+                    dots[i] = new ImageView(context);
+                    dots[i].setImageResource(i == 0 ? R.drawable.active_dot : R.drawable.inactive_dot);
+
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(35, 35); // 크기
+                    params.setMargins(8, 0, 8, 0);
+                    dots[i].setLayoutParams(params);
+
+                    slideHolder.indicatorContainer.addView(dots[i]);
+                }
+
+                // 🔁 슬라이드 넘길 때 인디케이터 업데이트
+                slideHolder.slideViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        for (int i = 0; i < dots.length; i++) {
+                            dots[i].setImageResource(i == position ? R.drawable.active_dot : R.drawable.inactive_dot);
+                        }
                     }
                 });
 
-                h.buttonContainer.addView(dynamicBtn);
+                slideHolder.slideViewPager.setVisibility(View.VISIBLE);
+
+                // 페이지 여백 및 옆 페이지 미리보기 효과
+                slideHolder.slideViewPager.setClipToPadding(false);
+                slideHolder.slideViewPager.setPadding(32, 0, 32, 0);
+                slideHolder.slideViewPager.setOffscreenPageLimit(1);
+                slideHolder.slideViewPager.setPageTransformer((page, pos) -> {
+                    float offset = 40f * Math.abs(pos);
+                    page.setTranslationX(offset);
+                });
+            } else {
+                slideHolder.slideViewPager.setVisibility(View.GONE);
             }
         }
     }
@@ -133,9 +159,43 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         return chatList.size();
     }
 
-    private String getCurrentTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("a h:mm", Locale.getDefault());
-        return sdf.format(new Date());
+    static class UserMessageViewHolder extends RecyclerView.ViewHolder {
+        TextView textMessageUser, textTimeUser;
+        public UserMessageViewHolder(@NonNull View itemView) {
+            super(itemView);
+            textMessageUser = itemView.findViewById(R.id.text_message_user);
+            textTimeUser = itemView.findViewById(R.id.text_time_user);
+        }
+    }
+
+    static class BotMessageViewHolder extends RecyclerView.ViewHolder {
+        TextView textMessageBot, textTimeBot;
+        LinearLayout buttonContainer;
+        public BotMessageViewHolder(@NonNull View itemView) {
+            super(itemView);
+            textMessageBot = itemView.findViewById(R.id.text_message_bot);
+            textTimeBot = itemView.findViewById(R.id.text_time_bot);
+            buttonContainer = itemView.findViewById(R.id.button_container_bot);
+        }
+    }
+
+    static class ImageViewHolder extends RecyclerView.ViewHolder {
+        ImageView imageView;
+        public ImageViewHolder(@NonNull View itemView) {
+            super(itemView);
+            imageView = itemView.findViewById(R.id.image_view);
+        }
+    }
+
+    static class SlideGroupViewHolder extends RecyclerView.ViewHolder {
+        ViewPager2 slideViewPager;
+        LinearLayout indicatorContainer;  // 🔵 인디케이터 컨테이너 추가
+
+
+        public SlideGroupViewHolder(@NonNull View itemView) {
+            super(itemView);
+            slideViewPager = itemView.findViewById(R.id.slide_view_pager);
+            indicatorContainer = itemView.findViewById(R.id.indicator_container);  // 🔵 이 줄 추가
+        }
     }
 }
-
