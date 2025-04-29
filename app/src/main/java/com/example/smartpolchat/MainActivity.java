@@ -147,13 +147,15 @@ public class MainActivity extends AppCompatActivity {
             RuleEntry entry = ruleMap.get(normalizedInput);
 
             // 메인 텍스트 + 버튼 출력
-            ChatMessage msg = new ChatMessage(
-                    ChatMessage.TYPE_BOT,
-                    entry.answerText,
-                    getCurrentTime(),
-                    entry.buttons
-            );
-            chatList.add(msg);
+            if (entry.answerText != null && !entry.answerText.trim().isEmpty()) {
+                ChatMessage msg = new ChatMessage(
+                        ChatMessage.TYPE_BOT,
+                        entry.answerText,
+                        getCurrentTime(),
+                        entry.buttons
+                );
+                chatList.add(msg);
+            }
 
             // 슬라이드가 있다면 별도 메시지 추가
             if (entry.slides != null && !entry.slides.isEmpty()) {

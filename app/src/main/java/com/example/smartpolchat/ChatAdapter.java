@@ -1,3 +1,4 @@
+// ✅ ChatAdapter.java (최신: 슬라이드 자동 높이 조절 + 안전한 콜백 등록 포함)
 package com.example.smartpolchat;
 
 import android.content.Context;
@@ -62,9 +63,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (holder instanceof UserMessageViewHolder) {
             ((UserMessageViewHolder) holder).textMessageUser.setText(chatMessage.getMessage());
             ((UserMessageViewHolder) holder).textTimeUser.setText(chatMessage.getTime());
-        }
 
-        else if (holder instanceof BotMessageViewHolder) {
+        } else if (holder instanceof BotMessageViewHolder) {
             BotMessageViewHolder botHolder = (BotMessageViewHolder) holder;
             botHolder.textMessageBot.setText(chatMessage.getMessage());
             botHolder.textTimeBot.setText(chatMessage.getTime());
@@ -80,31 +80,26 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     btn.setBackgroundTintList(context.getColorStateList(R.color.teal_700));
                     btn.setTextColor(context.getColor(R.color.white));
                     btn.setOnClickListener(v -> {
-                        if (listener != null) {
-                            listener.onImageRequested(b.image);
-                        }
+                        if (listener != null) listener.onImageRequested(b.image);
                     });
                     botHolder.buttonContainer.addView(btn);
                 }
             }
-        }
 
-        else if (holder instanceof ImageViewHolder) {
+        } else if (holder instanceof ImageViewHolder) {
             ImageViewHolder imgHolder = (ImageViewHolder) holder;
             String imageName = chatMessage.getImageName();
             if (imageName != null) {
                 int resId = context.getResources().getIdentifier(imageName, "drawable", context.getPackageName());
                 imgHolder.imageView.setImageResource(resId);
-
                 imgHolder.imageView.setOnClickListener(v -> {
                     Intent intent = new Intent(context, ImageZoomActivity.class);
                     intent.putExtra("imageName", imageName);
                     context.startActivity(intent);
                 });
             }
-        }
 
-        else if (holder instanceof SlideGroupViewHolder) {
+        } else if (holder instanceof SlideGroupViewHolder) {
             SlideGroupViewHolder slideHolder = (SlideGroupViewHolder) holder;
             List<SlideEntry> slides = chatMessage.getSlides();
 
@@ -112,44 +107,59 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 SlideAdapter adapter = new SlideAdapter(context, slides, listener);
                 slideHolder.slideViewPager.setAdapter(adapter);
 
-                // 🔵 인디케이터 생성
-                slideHolder.indicatorContainer.removeAllViews(); // 초기화
+                // 초기 슬라이드 높이 조정
+                slideHolder.slideViewPager.postDelayed(() -> {
+                    View firstSlide = slideHolder.slideViewPager.findViewWithTag("slide_0");
+                    if (firstSlide != null) {
+                        firstSlide.measure(
+                                View.MeasureSpec.makeMeasureSpec(slideHolder.slideViewPager.getWidth(), View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                        );
+                        int height = firstSlide.getMeasuredHeight();
+                        ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
+                        layoutParams.height = height;
+                        slideHolder.slideViewPager.setLayoutParams(layoutParams);
+                    }
+                }, 50);
+
+                // 인디케이터 생성
+                slideHolder.indicatorContainer.removeAllViews();
                 int slideCount = slides.size();
                 ImageView[] dots = new ImageView[slideCount];
 
                 for (int i = 0; i < slideCount; i++) {
                     dots[i] = new ImageView(context);
                     dots[i].setImageResource(i == 0 ? R.drawable.active_dot : R.drawable.inactive_dot);
-
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(35, 35); // 크기
-                    params.setMargins(8, 0, 8, 0);
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(30, 30);
+                    params.setMargins(12, 0, 12, 0);
                     dots[i].setLayoutParams(params);
-
                     slideHolder.indicatorContainer.addView(dots[i]);
                 }
 
-                // 🔁 슬라이드 넘길 때 인디케이터 업데이트
+                // 안전하게 콜백 등록 (중복 방지)
                 slideHolder.slideViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                     @Override
-                    public void onPageSelected(int position) {
+                    public void onPageSelected(int pos) {
                         for (int i = 0; i < dots.length; i++) {
-                            dots[i].setImageResource(i == position ? R.drawable.active_dot : R.drawable.inactive_dot);
+                            dots[i].setImageResource(i == pos ? R.drawable.active_dot : R.drawable.inactive_dot);
                         }
+
+                        // 지연 후 슬라이드 높이 재조정
+                        slideHolder.slideViewPager.postDelayed(() -> {
+                            View view = slideHolder.slideViewPager.findViewWithTag("slide_" + pos);
+                            if (view != null) {
+                                view.measure(
+                                        View.MeasureSpec.makeMeasureSpec(slideHolder.slideViewPager.getWidth(), View.MeasureSpec.EXACTLY),
+                                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                                );
+                                int height = view.getMeasuredHeight();
+                                ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
+                                layoutParams.height = height;
+                                slideHolder.slideViewPager.setLayoutParams(layoutParams);
+                            }
+                        }, 50);
                     }
                 });
-
-                slideHolder.slideViewPager.setVisibility(View.VISIBLE);
-
-                // 페이지 여백 및 옆 페이지 미리보기 효과
-                slideHolder.slideViewPager.setClipToPadding(false);
-                slideHolder.slideViewPager.setPadding(32, 0, 32, 0);
-                slideHolder.slideViewPager.setOffscreenPageLimit(1);
-                slideHolder.slideViewPager.setPageTransformer((page, pos) -> {
-                    float offset = 40f * Math.abs(pos);
-                    page.setTranslationX(offset);
-                });
-            } else {
-                slideHolder.slideViewPager.setVisibility(View.GONE);
             }
         }
     }
@@ -189,13 +199,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class SlideGroupViewHolder extends RecyclerView.ViewHolder {
         ViewPager2 slideViewPager;
-        LinearLayout indicatorContainer;  // 🔵 인디케이터 컨테이너 추가
-
-
+        LinearLayout indicatorContainer;
         public SlideGroupViewHolder(@NonNull View itemView) {
             super(itemView);
             slideViewPager = itemView.findViewById(R.id.slide_view_pager);
-            indicatorContainer = itemView.findViewById(R.id.indicator_container);  // 🔵 이 줄 추가
+            indicatorContainer = itemView.findViewById(R.id.indicator_container);
         }
     }
 }
