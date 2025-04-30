@@ -1,4 +1,3 @@
-// ✅ ChatAdapter.java (최신: 슬라이드 자동 높이 조절 + 안전한 콜백 등록 포함)
 package com.example.smartpolchat;
 
 import android.content.Context;
@@ -69,6 +68,11 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             botHolder.textMessageBot.setText(chatMessage.getMessage());
             botHolder.textTimeBot.setText(chatMessage.getTime());
 
+            // GPT 캐릭터 아이콘 표시
+            botHolder.gptAvatar.setVisibility(View.VISIBLE);
+            botHolder.gptAvatar.setImageResource(R.drawable.gpt_bot);
+
+            // 버튼 구성
             botHolder.buttonContainer.removeAllViews();
             List<ButtonEntry> buttons = chatMessage.getButtons();
             if (buttons != null && !buttons.isEmpty()) {
@@ -103,11 +107,15 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             SlideGroupViewHolder slideHolder = (SlideGroupViewHolder) holder;
             List<SlideEntry> slides = chatMessage.getSlides();
 
+            if (slideHolder.gptAvatar != null) {
+                slideHolder.gptAvatar.setVisibility(View.VISIBLE);
+                slideHolder.gptAvatar.setImageResource(R.drawable.gpt_bot);
+            }
+
             if (slides != null && !slides.isEmpty()) {
                 SlideAdapter adapter = new SlideAdapter(context, slides, listener);
                 slideHolder.slideViewPager.setAdapter(adapter);
 
-                // 초기 슬라이드 높이 조정
                 slideHolder.slideViewPager.postDelayed(() -> {
                     View firstSlide = slideHolder.slideViewPager.findViewWithTag("slide_0");
                     if (firstSlide != null) {
@@ -122,7 +130,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     }
                 }, 50);
 
-                // 인디케이터 생성
                 slideHolder.indicatorContainer.removeAllViews();
                 int slideCount = slides.size();
                 ImageView[] dots = new ImageView[slideCount];
@@ -136,7 +143,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     slideHolder.indicatorContainer.addView(dots[i]);
                 }
 
-                // 안전하게 콜백 등록 (중복 방지)
                 slideHolder.slideViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                     @Override
                     public void onPageSelected(int pos) {
@@ -144,7 +150,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             dots[i].setImageResource(i == pos ? R.drawable.active_dot : R.drawable.inactive_dot);
                         }
 
-                        // 지연 후 슬라이드 높이 재조정
                         slideHolder.slideViewPager.postDelayed(() -> {
                             View view = slideHolder.slideViewPager.findViewWithTag("slide_" + pos);
                             if (view != null) {
@@ -181,11 +186,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class BotMessageViewHolder extends RecyclerView.ViewHolder {
         TextView textMessageBot, textTimeBot;
         LinearLayout buttonContainer;
+        ImageView gptAvatar;  // GPT 캐릭터 아이콘 추가
+
         public BotMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             textMessageBot = itemView.findViewById(R.id.text_message_bot);
             textTimeBot = itemView.findViewById(R.id.text_time_bot);
             buttonContainer = itemView.findViewById(R.id.button_container_bot);
+            gptAvatar = itemView.findViewById(R.id.gpt_avatar); // 반드시 item_chat.xml에 있어야 함
         }
     }
 
@@ -200,10 +208,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class SlideGroupViewHolder extends RecyclerView.ViewHolder {
         ViewPager2 slideViewPager;
         LinearLayout indicatorContainer;
+        ImageView gptAvatar;  // ✅ GPT 아이콘 추가
+
         public SlideGroupViewHolder(@NonNull View itemView) {
             super(itemView);
             slideViewPager = itemView.findViewById(R.id.slide_view_pager);
             indicatorContainer = itemView.findViewById(R.id.indicator_container);
+            gptAvatar = itemView.findViewById(R.id.gpt_avatar);  // ✅ 반드시 item_chat_slide_group.xml에 있어야 함
+
         }
     }
 }

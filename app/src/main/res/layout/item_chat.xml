@@ -1,50 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:padding="8dp">
 
-    <!-- 말풍선 텍스트 + 버튼 -->
+    <!-- GPT 캐릭터 아이콘 -->
+    <ImageView
+        android:id="@+id/gpt_avatar"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="bottom"
+        android:src="@drawable/gpt_bot"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="GPT 캐릭터 아이콘" />
+
+    <!-- 말풍선 + 버튼 + 시간 (세로 정렬) -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/bg_bot_bubble"
-        android:padding="12dp"
-        android:maxWidth="280dp"
-        android:layout_marginStart="8dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/text_message_bot"
+        <!-- 말풍선 + 버튼 -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#000000"
-            android:textSize="16sp" />
-
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/slide_view_pager"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp" />
-
-        <!-- 버튼이 여러 개 들어가는 공간 -->
-        <LinearLayout
-            android:id="@+id/button_container_bot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="8dp" />
-    </LinearLayout>
+            android:background="@drawable/bg_bot_bubble"
+            android:padding="12dp"
+            android:maxWidth="280dp"
+            android:layout_marginStart="8dp">
 
-    <!-- 시간 -->
-    <TextView
-        android:id="@+id/text_time_bot"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#888888"
-        android:textSize="12sp"
-        android:layout_marginTop="4dp"
-        android:layout_marginStart="12dp" />
+            <TextView
+                android:id="@+id/text_message_bot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:textSize="16sp" />
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/slide_view_pager"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- 버튼이 여러 개 들어가는 공간 -->
+            <LinearLayout
+                android:id="@+id/button_container_bot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+
+        <!-- 시간 표시 -->
+        <TextView
+            android:id="@+id/text_time_bot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="12dp" />
+    </LinearLayout>
 </LinearLayout>
