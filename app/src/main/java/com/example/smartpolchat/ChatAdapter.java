@@ -68,6 +68,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             BotMessageViewHolder botHolder = (BotMessageViewHolder) holder;
             botHolder.textMessageBot.setText(chatMessage.getMessage());
             botHolder.textTimeBot.setText(chatMessage.getTime());
+            holder.itemView.setAlpha(0f);
+            holder.itemView.animate().alpha(1f).setDuration(300).start();
 
             botHolder.gptAvatar.setVisibility(View.VISIBLE);
             botHolder.gptAvatar.setImageResource(R.drawable.gpt_bot);
@@ -110,6 +112,8 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         else if (holder instanceof SlideGroupViewHolder) {
             SlideGroupViewHolder slideHolder = (SlideGroupViewHolder) holder;
             List<SlideEntry> slides = chatMessage.getSlides();
+            holder.itemView.setAlpha(0f);
+            holder.itemView.animate().alpha(1f).setDuration(300).start();
 
             if (slideHolder.gptAvatar != null) {
                 slideHolder.gptAvatar.setVisibility(View.VISIBLE);
