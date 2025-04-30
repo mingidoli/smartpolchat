@@ -2,18 +2,14 @@ package com.example.smartpolchat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
-
 import java.util.List;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -25,11 +21,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final List<ChatMessage> chatList;
     private final Context context;
     private final OnImageRequestListener listener;
+    private final RecyclerView recyclerView; // 🔹 RecyclerView 참조 추가
 
-    public ChatAdapter(Context context, List<ChatMessage> chatList, OnImageRequestListener listener) {
+    public ChatAdapter(Context context, List<ChatMessage> chatList, RecyclerView recyclerView, OnImageRequestListener listener) {
         this.context = context;
         this.chatList = chatList;
         this.listener = listener;
+        this.recyclerView = recyclerView;
     }
 
     @Override
@@ -49,6 +47,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         } else if (viewType == ChatMessage.TYPE_SLIDE) {
             View view = LayoutInflater.from(context).inflate(R.layout.item_chat_slide_group, parent, false);
             return new SlideGroupViewHolder(view);
+        } else if (viewType == ChatMessage.TYPE_NOTICE) {
+            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_notice, parent, false);
+            return new NoticeViewHolder(view);  // ✅ 공지 ViewHolder
         } else {
             View view = LayoutInflater.from(context).inflate(R.layout.item_chat, parent, false);
             return new BotMessageViewHolder(view);
@@ -68,11 +69,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             botHolder.textMessageBot.setText(chatMessage.getMessage());
             botHolder.textTimeBot.setText(chatMessage.getTime());
 
-            // GPT 캐릭터 아이콘 표시
             botHolder.gptAvatar.setVisibility(View.VISIBLE);
             botHolder.gptAvatar.setImageResource(R.drawable.gpt_bot);
 
-            // 버튼 구성
             botHolder.buttonContainer.removeAllViews();
             List<ButtonEntry> buttons = chatMessage.getButtons();
             if (buttons != null && !buttons.isEmpty()) {
@@ -102,8 +101,13 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     context.startActivity(intent);
                 });
             }
+        }
 
-        } else if (holder instanceof SlideGroupViewHolder) {
+        else if (holder instanceof NoticeViewHolder) {
+            ((NoticeViewHolder) holder).noticeText.setText(chatMessage.getMessage());
+        }
+
+        else if (holder instanceof SlideGroupViewHolder) {
             SlideGroupViewHolder slideHolder = (SlideGroupViewHolder) holder;
             List<SlideEntry> slides = chatMessage.getSlides();
 
@@ -115,6 +119,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             if (slides != null && !slides.isEmpty()) {
                 SlideAdapter adapter = new SlideAdapter(context, slides, listener);
                 slideHolder.slideViewPager.setAdapter(adapter);
+                slideHolder.slideViewPager.setOffscreenPageLimit(slides.size()); // 🔹 핵심
 
                 slideHolder.slideViewPager.postDelayed(() -> {
                     View firstSlide = slideHolder.slideViewPager.findViewWithTag("slide_0");
@@ -127,6 +132,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
                         layoutParams.height = height;
                         slideHolder.slideViewPager.setLayoutParams(layoutParams);
+
+                        // 🔹 스크롤 자동 이동
+                        recyclerView.smoothScrollToPosition(holder.getAdapterPosition());
                     }
                 }, 50);
 
@@ -161,6 +169,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                 ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
                                 layoutParams.height = height;
                                 slideHolder.slideViewPager.setLayoutParams(layoutParams);
+
+                                // 🔹 스크롤 자동 이동
+                                recyclerView.smoothScrollToPosition(holder.getAdapterPosition());
                             }
                         }, 50);
                     }
@@ -186,14 +197,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class BotMessageViewHolder extends RecyclerView.ViewHolder {
         TextView textMessageBot, textTimeBot;
         LinearLayout buttonContainer;
-        ImageView gptAvatar;  // GPT 캐릭터 아이콘 추가
+        ImageView gptAvatar;
 
         public BotMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             textMessageBot = itemView.findViewById(R.id.text_message_bot);
             textTimeBot = itemView.findViewById(R.id.text_time_bot);
             buttonContainer = itemView.findViewById(R.id.button_container_bot);
-            gptAvatar = itemView.findViewById(R.id.gpt_avatar); // 반드시 item_chat.xml에 있어야 함
+            gptAvatar = itemView.findViewById(R.id.gpt_avatar);
         }
     }
 
@@ -208,14 +219,22 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     static class SlideGroupViewHolder extends RecyclerView.ViewHolder {
         ViewPager2 slideViewPager;
         LinearLayout indicatorContainer;
-        ImageView gptAvatar;  // ✅ GPT 아이콘 추가
+        ImageView gptAvatar;
 
         public SlideGroupViewHolder(@NonNull View itemView) {
             super(itemView);
             slideViewPager = itemView.findViewById(R.id.slide_view_pager);
             indicatorContainer = itemView.findViewById(R.id.indicator_container);
-            gptAvatar = itemView.findViewById(R.id.gpt_avatar);  // ✅ 반드시 item_chat_slide_group.xml에 있어야 함
+            gptAvatar = itemView.findViewById(R.id.gpt_avatar);
+        }
+    }
 
+    static class NoticeViewHolder extends RecyclerView.ViewHolder {
+        TextView noticeText;
+
+        public NoticeViewHolder(@NonNull View itemView) {
+            super(itemView);
+            noticeText = itemView.findViewById(R.id.notice_text);
         }
     }
 }

@@ -8,6 +8,8 @@ public class ChatMessage {
     public static final int TYPE_BOT = 1;
     public static final int TYPE_IMAGE = 2;
     public static final int TYPE_SLIDE = 3; // 🔹 슬라이드 전용 타입 추가
+    public static final int TYPE_NOTICE = 4; // 고정 공지사항
+
 
     private int type;
     private String message;
@@ -15,6 +17,10 @@ public class ChatMessage {
     private List<ButtonEntry> buttons;
     private String imageName;
     private List<SlideEntry> slides;
+
+    public ChatMessage() {
+        // 아무 일도 하지 않음 — 빈 생성자
+    }
 
     // 기본 텍스트 메시지
     public ChatMessage(int type, String message, String time) {
@@ -57,5 +63,19 @@ public class ChatMessage {
     public List<SlideEntry> getSlides() { return slides; }
 
     public String getImageName() { return imageName; }
+
     public void setImageName(String imageName) { this.imageName = imageName; }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
 }
+

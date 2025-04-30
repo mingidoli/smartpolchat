@@ -35,7 +35,16 @@ public class MainActivity extends AppCompatActivity {
         buttonSend = findViewById(R.id.buttonSend);
 
         chatList = new ArrayList<>();
-        chatAdapter = new ChatAdapter(this, chatList, imageName -> {
+
+        // ✅ 공지 추가
+        ChatMessage notice = new ChatMessage();
+        notice.setType(ChatMessage.TYPE_NOTICE);
+        notice.setMessage("📢 SmartPolChat에 오신 걸 환영합니다!");
+        notice.setTime("공지");
+
+        chatList.add(0, notice);
+
+        chatAdapter = new ChatAdapter(this, chatList, chatRecyclerView, imageName -> {
             ChatMessage imageMessage = new ChatMessage(ChatMessage.TYPE_IMAGE, null, getCurrentTime());
             imageMessage.setImageName(imageName);
             chatList.add(imageMessage);
