@@ -11,7 +11,7 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_gravity="bottom"
-        android:src="@drawable/gpt_bot"
+        android:src="@drawable/bg_gpt_avatar"
         android:layout_marginEnd="8dp"
         android:contentDescription="GPT 캐릭터 아이콘"
         android:scaleType="fitCenter" />
