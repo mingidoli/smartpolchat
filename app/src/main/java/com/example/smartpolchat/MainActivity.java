@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         // ✅ 공지 추가
         ChatMessage notice = new ChatMessage();
         notice.setType(ChatMessage.TYPE_NOTICE);
-        notice.setMessage("📢 SmartPolChat에 오신 걸 환영합니다!");
+        notice.setMessage("📢 SmartPolChat에 오신 걸 환영합니다!\n📢키워드를 입력시 관련 정보나 이미지를 볼 수 있습니다.\n(인디케이터가 있을 시 슬라이드하여 추가 정보를 확인하세요)");
         notice.setTime("공지");
 
         chatList.add(0, notice);

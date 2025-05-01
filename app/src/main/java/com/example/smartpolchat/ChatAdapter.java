@@ -1,3 +1,5 @@
+
+// ✅ Java 8 호환 전체 버전 ChatAdapter.java
 package com.example.smartpolchat;
 
 import android.content.Context;
@@ -21,7 +23,7 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final List<ChatMessage> chatList;
     private final Context context;
     private final OnImageRequestListener listener;
-    private final RecyclerView recyclerView; // 🔹 RecyclerView 참조 추가
+    private final RecyclerView recyclerView;
 
     public ChatAdapter(Context context, List<ChatMessage> chatList, RecyclerView recyclerView, OnImageRequestListener listener) {
         this.context = context;
@@ -39,20 +41,15 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (viewType == ChatMessage.TYPE_USER) {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_user, parent, false);
-            return new UserMessageViewHolder(view);
+            return new UserMessageViewHolder(LayoutInflater.from(context).inflate(R.layout.item_chat_user, parent, false));
         } else if (viewType == ChatMessage.TYPE_IMAGE) {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_image, parent, false);
-            return new ImageViewHolder(view);
+            return new ImageViewHolder(LayoutInflater.from(context).inflate(R.layout.item_chat_image, parent, false));
         } else if (viewType == ChatMessage.TYPE_SLIDE) {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_slide_group, parent, false);
-            return new SlideGroupViewHolder(view);
+            return new SlideGroupViewHolder(LayoutInflater.from(context).inflate(R.layout.item_chat_slide_group, parent, false));
         } else if (viewType == ChatMessage.TYPE_NOTICE) {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_chat_notice, parent, false);
-            return new NoticeViewHolder(view);  // ✅ 공지 ViewHolder
+            return new NoticeViewHolder(LayoutInflater.from(context).inflate(R.layout.item_chat_notice, parent, false));
         } else {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_chat, parent, false);
-            return new BotMessageViewHolder(view);
+            return new BotMessageViewHolder(LayoutInflater.from(context).inflate(R.layout.item_chat, parent, false));
         }
     }
 
@@ -61,8 +58,9 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         ChatMessage chatMessage = chatList.get(position);
 
         if (holder instanceof UserMessageViewHolder) {
-            ((UserMessageViewHolder) holder).textMessageUser.setText(chatMessage.getMessage());
-            ((UserMessageViewHolder) holder).textTimeUser.setText(chatMessage.getTime());
+            UserMessageViewHolder userHolder = (UserMessageViewHolder) holder;
+            userHolder.textMessageUser.setText(chatMessage.getMessage());
+            userHolder.textTimeUser.setText(chatMessage.getTime());
 
         } else if (holder instanceof BotMessageViewHolder) {
             BotMessageViewHolder botHolder = (BotMessageViewHolder) holder;
@@ -103,27 +101,24 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     context.startActivity(intent);
                 });
             }
-        }
 
-        else if (holder instanceof NoticeViewHolder) {
-            ((NoticeViewHolder) holder).noticeText.setText(chatMessage.getMessage());
-        }
+        } else if (holder instanceof NoticeViewHolder) {
+            NoticeViewHolder noticeHolder = (NoticeViewHolder) holder;
+            noticeHolder.noticeText.setText(chatMessage.getMessage());
 
-        else if (holder instanceof SlideGroupViewHolder) {
+        } else if (holder instanceof SlideGroupViewHolder) {
             SlideGroupViewHolder slideHolder = (SlideGroupViewHolder) holder;
             List<SlideEntry> slides = chatMessage.getSlides();
             holder.itemView.setAlpha(0f);
             holder.itemView.animate().alpha(1f).setDuration(300).start();
 
-            if (slideHolder.gptAvatar != null) {
-                slideHolder.gptAvatar.setVisibility(View.VISIBLE);
-                slideHolder.gptAvatar.setImageResource(R.drawable.gpt_bot);
-            }
+            slideHolder.gptAvatar.setVisibility(View.VISIBLE);
+            slideHolder.gptAvatar.setImageResource(R.drawable.gpt_bot);
 
             if (slides != null && !slides.isEmpty()) {
                 SlideAdapter adapter = new SlideAdapter(context, slides, listener);
                 slideHolder.slideViewPager.setAdapter(adapter);
-                slideHolder.slideViewPager.setOffscreenPageLimit(slides.size()); // 🔹 핵심
+                slideHolder.slideViewPager.setOffscreenPageLimit(slides.size());
 
                 slideHolder.slideViewPager.postDelayed(() -> {
                     View firstSlide = slideHolder.slideViewPager.findViewWithTag("slide_0");
@@ -136,50 +131,48 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                         ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
                         layoutParams.height = height;
                         slideHolder.slideViewPager.setLayoutParams(layoutParams);
-
-                        // 🔹 스크롤 자동 이동
                         recyclerView.smoothScrollToPosition(holder.getAdapterPosition());
                     }
                 }, 50);
 
-                slideHolder.indicatorContainer.removeAllViews();
                 int slideCount = slides.size();
-                ImageView[] dots = new ImageView[slideCount];
-
-                for (int i = 0; i < slideCount; i++) {
-                    dots[i] = new ImageView(context);
-                    dots[i].setImageResource(i == 0 ? R.drawable.active_dot : R.drawable.inactive_dot);
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(30, 30);
-                    params.setMargins(12, 0, 12, 0);
-                    dots[i].setLayoutParams(params);
-                    slideHolder.indicatorContainer.addView(dots[i]);
-                }
-
-                slideHolder.slideViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-                    @Override
-                    public void onPageSelected(int pos) {
-                        for (int i = 0; i < dots.length; i++) {
-                            dots[i].setImageResource(i == pos ? R.drawable.active_dot : R.drawable.inactive_dot);
-                        }
-
-                        slideHolder.slideViewPager.postDelayed(() -> {
-                            View view = slideHolder.slideViewPager.findViewWithTag("slide_" + pos);
-                            if (view != null) {
-                                view.measure(
-                                        View.MeasureSpec.makeMeasureSpec(slideHolder.slideViewPager.getWidth(), View.MeasureSpec.EXACTLY),
-                                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-                                );
-                                int height = view.getMeasuredHeight();
-                                ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
-                                layoutParams.height = height;
-                                slideHolder.slideViewPager.setLayoutParams(layoutParams);
-
-                                // 🔹 스크롤 자동 이동
-                                recyclerView.smoothScrollToPosition(holder.getAdapterPosition());
-                            }
-                        }, 50);
+                slideHolder.indicatorContainer.removeAllViews();
+                if (slideCount <= 1) {
+                    slideHolder.indicatorContainer.setVisibility(View.GONE);
+                } else {
+                    slideHolder.indicatorContainer.setVisibility(View.VISIBLE);
+                    ImageView[] dots = new ImageView[slideCount];
+                    for (int i = 0; i < slideCount; i++) {
+                        dots[i] = new ImageView(context);
+                        dots[i].setImageResource(i == 0 ? R.drawable.active_dot : R.drawable.inactive_dot);
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(30, 30);
+                        params.setMargins(12, 0, 12, 0);
+                        dots[i].setLayoutParams(params);
+                        slideHolder.indicatorContainer.addView(dots[i]);
                     }
-                });
+                    slideHolder.slideViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+                        @Override
+                        public void onPageSelected(int pos) {
+                            for (int i = 0; i < dots.length; i++) {
+                                dots[i].setImageResource(i == pos ? R.drawable.active_dot : R.drawable.inactive_dot);
+                            }
+                            slideHolder.slideViewPager.postDelayed(() -> {
+                                View view = slideHolder.slideViewPager.findViewWithTag("slide_" + pos);
+                                if (view != null) {
+                                    view.measure(
+                                            View.MeasureSpec.makeMeasureSpec(slideHolder.slideViewPager.getWidth(), View.MeasureSpec.EXACTLY),
+                                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                                    );
+                                    int height = view.getMeasuredHeight();
+                                    ViewGroup.LayoutParams layoutParams = slideHolder.slideViewPager.getLayoutParams();
+                                    layoutParams.height = height;
+                                    slideHolder.slideViewPager.setLayoutParams(layoutParams);
+                                    recyclerView.smoothScrollToPosition(holder.getAdapterPosition());
+                                }
+                            }, 50);
+                        }
+                    });
+                }
             }
         }
     }
@@ -202,7 +195,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         TextView textMessageBot, textTimeBot;
         LinearLayout buttonContainer;
         ImageView gptAvatar;
-
         public BotMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             textMessageBot = itemView.findViewById(R.id.text_message_bot);
@@ -224,7 +216,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         ViewPager2 slideViewPager;
         LinearLayout indicatorContainer;
         ImageView gptAvatar;
-
         public SlideGroupViewHolder(@NonNull View itemView) {
             super(itemView);
             slideViewPager = itemView.findViewById(R.id.slide_view_pager);
@@ -235,10 +226,10 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     static class NoticeViewHolder extends RecyclerView.ViewHolder {
         TextView noticeText;
-
         public NoticeViewHolder(@NonNull View itemView) {
             super(itemView);
             noticeText = itemView.findViewById(R.id.notice_text);
         }
     }
 }
+
